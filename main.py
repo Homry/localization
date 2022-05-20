@@ -8,8 +8,8 @@ if __name__ == "__main__":
     parser.add_argument('--camera', type=str, default='camera4')
     args = parser.parse_args()
     local = Localization(camera=args.camera)
-    for i in range(1000):
-        image_, image = local.localize()
+    while True:
+        local.localize()
 
 
 
