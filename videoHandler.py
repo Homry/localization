@@ -1,4 +1,4 @@
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Union
 import numpy as np
 import cv2
 from utils import Logger
@@ -7,15 +7,15 @@ from grid import Point
 
 
 class VideoHandler:
-    def __init__(self, config, camera, Debug=False):
+    def __init__(self, config, camera, Debug=True):
 
         self.config = config
         self.stream = cv2.VideoCapture(self.config['videoPath'])
         self.logger = Logger(f'VideoStream {camera}')
         self.options = apriltag.DetectorOptions(families="tag36h11")
         self.detector = apriltag.Detector(self.options)
-        self._pts = self.config["pts"]
-        self._debug = False
+        self._pts = None
+        self._debug = Debug
 
     def getShape(self):
         status, image = self.stream.read()
@@ -29,20 +29,27 @@ class VideoHandler:
             self.logger.error(f'getImage - {status}')
         return image
 
-    def get_init_camera_state(self) -> Tuple[Dict, Dict, Tuple]:
+    def getInitCameraState(self) -> Tuple[Dict, Dict, Tuple]:
         end = False
         virtual_config = {}
         real_conf = {}
         image = None
         while not end:
             image = self._undistort(self._getImage())
-            markers_coords, robot_coords = self._findAprilTags(image)
+            markers_coords = self._getFloorCoords(image)
             if len(markers_coords) == 4:
-                end = True
-                index = 0
-                for i in ["A", "B", "C", "D"]:
-                    virtual_config[i] = Point(markers_coords[index][0], markers_coords[index][1])
-                    index += 1
+                image = self._warpPerspective(image, markers_coords)
+                end_ = False
+                while not end_:
+                    index = 0
+                    markers_coords = self._getFloorCoords(image)
+                    if len(markers_coords) == 4:
+                        self._pts = markers_coords
+                        for i in ["A", "B", "C", "D"]:
+                            virtual_config[i] = Point(markers_coords[index][0], markers_coords[index][1])
+                            index += 1
+                    end_ = True
+                    end = True
         index = 0
         for i in ["A", "B", "C", "D"]:
             real_conf[i] = Point(self.config['markers'][index][0], self.config['markers'][index][1])
@@ -50,19 +57,18 @@ class VideoHandler:
 
         return virtual_config, real_conf, (image.shape[0], image.shape[1])
 
-    def get_wrapped_image_with_coords(self) -> Tuple[np.array, np.array]:
+    def getWrappedImageWithRobotCoords(self) -> Tuple[np.array, np.array]:
         image = self._undistort(self._getImage())
-        markers_coords, robot_coords = self._findAprilTags(image)
-        image = self._Homo(image, markers_coords)
-        markers_coords, robot_coords = self._findAprilTags(image)
+        floor_cords = self._getFloorCoords(image)
+        image = self._warpPerspective(image, floor_cords)
+        cv2.imwrite('./image.jpg', image)
+        robot_coords = self._getRobotCoords(image)
         return image, robot_coords
 
-    def _Homo(self, img, pts1):
+    def _warpPerspective(self, img, pts1):
         rows, cols = img.shape[:2]
         if len(pts1) == 4:
             self._pts = pts1
-        if self._debug:
-            self._pts = self.config["pts"]
         pts2 = np.float32([[self._pts[0, 0], self._pts[0, 1]],
                            [self._pts[0, 0], self._pts[2, 1]],
                            [self._pts[2, 0], self._pts[2, 1]],
@@ -79,21 +85,47 @@ class VideoHandler:
                                                            (cols, rows), 1, (cols, rows))
         return cv2.undistort(img, self.config["camera_matrix"], self.config['dist_coefs'], None, newCameraMatrix)
 
-    def _findAprilTags(self, image) -> Tuple[np.float32, np.array]:
+    def _findAprilTags(self, image):
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        results = self.detector.detect(gray)
-        tags = self.config["markers_id"]
+        return self.detector.detect(gray)
+
+    def _getRobotCoords(self, image):
         robot_tags = [419]
-        res = []
-        robot = []
-        find_tag = []
-        for i in results:
-            if i.tag_id in tags:
-                res.append(i.center)
-                find_tag.append(i.tag_id)
-        for i in results:
+        robot_coords = []
+        robot_id = []
+        for i in self._findAprilTags(image):
             if i.tag_id in robot_tags:
-                robot.append(i.center)
-                find_tag.append(i.tag_id)
-        self.logger.debug(f'findApriltag {res, find_tag}')
-        return np.float32(res), np.array(robot)
+                robot_coords.append(i.center)
+                robot_id.append(i.tag_id)
+        if self._debug:
+            self.logger.debug(f'find robot Apriltag {robot_coords, robot_id}')
+        return robot_coords
+
+    def _getFloorCoords(self, image):
+        floor_coords = []
+        floor_id = []
+        for i in self._findAprilTags(image):
+
+            if i.tag_id in self.config["markers_id"]:
+        #        self.logger.debug(f'{[i]}')
+                floor_coords.append(i.corners[0])
+                floor_id.append(i.tag_id)
+        if self._debug:
+            self.logger.debug(f'find floor Apriltag {floor_coords, floor_id}')
+        return np.float32(floor_coords)
+
+
+    def debug(self, image):
+        end = False
+        virtual_config = {}
+        real_conf = {}
+        index = 0
+        for i in ["A", "B", "C", "D"]:
+            virtual_config[i] = Point(self.config['pts'][index][0], self.config['pts'][index][1])
+            index += 1
+        index = 0
+        for i in ["A", "B", "C", "D"]:
+            real_conf[i] = Point(self.config['markers'][index][0], self.config['markers'][index][1])
+            index += 1
+
+        return virtual_config, real_conf, (image.shape[0], image.shape[1])
