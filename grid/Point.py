@@ -24,5 +24,8 @@ class Point:
     def __truediv__(self, other):
         return Point(self._x/other, self._y/other)
 
+    def __mul__(self, other):
+        return Point(self._x * other, self._y * other)
+
     def __repr__(self):
         return f'x={self._x}, y={self._y}'

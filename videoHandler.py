@@ -14,7 +14,7 @@ class VideoHandler:
         self.logger = Logger(f'VideoStream {camera}')
         self.options = apriltag.DetectorOptions(families="tag36h11")
         self.detector = apriltag.Detector(self.options)
-        self._pts = None
+        self._pts = config['pts']
         self._debug = Debug
 
     def getShape(self):
@@ -38,18 +38,16 @@ class VideoHandler:
             image = self._undistort(self._getImage())
             markers_coords = self._getFloorCoords(image)
             if len(markers_coords) == 4:
-                image = self._warpPerspective(image, markers_coords)
-                end_ = False
-                while not end_:
-                    index = 0
-                    markers_coords = self._getFloorCoords(image)
-                    if len(markers_coords) == 4:
-                        self._pts = markers_coords
-                        for i in ["A", "B", "C", "D"]:
-                            virtual_config[i] = Point(markers_coords[index][0], markers_coords[index][1])
-                            index += 1
-                    end_ = True
-                    end = True
+                self._pts = markers_coords
+                markers_coords = np.float32([[self._pts[0, 0], self._pts[0, 1]],
+                                             [self._pts[0, 0], self._pts[2, 1]],
+                                             [self._pts[2, 0], self._pts[2, 1]],
+                                             [self._pts[2, 0], self._pts[0, 1]]])
+                end = True
+                index = 0
+                for i in ["A", "B", "C", "D"]:
+                    virtual_config[i] = Point(markers_coords[index][0], markers_coords[index][1])
+                    index += 1
         index = 0
         for i in ["A", "B", "C", "D"]:
             real_conf[i] = Point(self.config['markers'][index][0], self.config['markers'][index][1])
@@ -61,7 +59,6 @@ class VideoHandler:
         image = self._undistort(self._getImage())
         floor_cords = self._getFloorCoords(image)
         image = self._warpPerspective(image, floor_cords)
-        cv2.imwrite('./image.jpg', image)
         robot_coords = self._getRobotCoords(image)
         return image, robot_coords
 
@@ -76,7 +73,9 @@ class VideoHandler:
 
         H = cv2.getPerspectiveTransform(pts2, self._pts)
         img = cv2.warpPerspective(img, H, (cols, rows), flags=cv2.WARP_INVERSE_MAP)
-
+        cv2.imshow('camera', img)
+        if cv2.waitKey(1) == 27:
+            exit(0)
         return img
 
     def _undistort(self, img) -> np.array:
@@ -107,13 +106,12 @@ class VideoHandler:
         for i in self._findAprilTags(image):
 
             if i.tag_id in self.config["markers_id"]:
-        #        self.logger.debug(f'{[i]}')
+                #        self.logger.debug(f'{[i]}')
                 floor_coords.append(i.corners[0])
                 floor_id.append(i.tag_id)
         if self._debug:
             self.logger.debug(f'find floor Apriltag {floor_coords, floor_id}')
         return np.float32(floor_coords)
-
 
     def debug(self, image):
         end = False

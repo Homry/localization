@@ -28,12 +28,22 @@ class Square:
     def getD(self):
         return self._virtual_d
 
-    def createRealCoords(self, virtual, ratio_x, ratio_y):
+    def __sub__(self, other):
+        self._virtual_a = self._virtual_a-other.getA()
+        self._virtual_b = self._virtual_b-other.getB()
+        self._virtual_c = self._virtual_c-other.getC()
+        self._virtual_d = self._virtual_d-other.getD()
+        return self
 
-        self._real_a = Point(virtual.getA().getX()*ratio_x, virtual.getA().getY()*ratio_y)
-        self._real_b = Point(virtual.getB().getX()*ratio_x, virtual.getB().getY()*ratio_y)
-        self._real_c = Point(virtual.getC().getX()*ratio_x, virtual.getC().getY()*ratio_y)
-        self._real_d = Point(virtual.getD().getX()*ratio_x, virtual.getD().getY()*ratio_y)
+    def createRealCoords(self, real, virtual, ratio_x, ratio_y):
+        self._virtual_a -= virtual["A"]
+        self._virtual_b -= virtual["B"]
+        self._virtual_c -= virtual["C"]
+        self._virtual_d -= virtual["D"]
+        self._real_a = Point(real["A"].getX()+self._virtual_a.getX() * ratio_x, real["A"].getY()-self._virtual_a.getY() * ratio_y)
+        self._real_b = Point(real["B"].getX()+self._virtual_b.getX() * ratio_x, real["B"].getY()-self._virtual_b.getY() * ratio_y)
+        self._real_c = Point(real["C"].getX()+self._virtual_c.getX() * ratio_x, real["C"].getY()-self._virtual_c.getY() * ratio_y)
+        self._real_d = Point(real["D"].getX()+self._virtual_d.getX() * ratio_x, real["D"].getY()-self._virtual_d.getY() * ratio_y)
 
     def getRobotCoords(self):
         return self._real_a + (self._real_b-self._real_a)/2

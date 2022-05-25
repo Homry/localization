@@ -5,6 +5,7 @@ from grid import Grid, Point
 import cv2
 from utils import Logger
 from utils import Config
+from map.map import Map
 
 
 class Localization:
@@ -16,30 +17,15 @@ class Localization:
         self.video = VideoHandler(self.config, camera)
         virtual, real, im_shape = self.video.getInitCameraState()
         self.grid = Grid(im_shape, 10, real, virtual)
-        self.x = 58.5/0.54
-        self.y = 58.5/0.535
-        self.map = cv2.imread('./map/autolab.jpeg')
-        self.map = cv2.cvtColor(self.map, cv2.COLOR_BGR2RGB)
-        self.counter = 0
+        self.map = Map('./map/autolab.jpeg', 58.5/0.54, 58.5/0.535)
+
 
     def localize(self):
         image, robots_coords = self.video.getWrappedImageWithRobotCoords()
-        robot_cords = []
         for i in robots_coords:
             coords = self.grid.getRobotCoords(Point(i[0], i[1]))
             self.logger.info(f'robot coords = {coords.getX(), coords.getY()}')
-
-            tmp = [coords.getX()*self.x, coords.getY()*self.y]
-            robot_cords.append(tmp)
-            self.logger.info(f'robot coords map = {tmp}')
-            thickness = 2
-            cords = (int(robot_cords[0][0]), int(robot_cords[0][1]))
-            image_ = cv2.circle(self.map, cords, 5, (255, 0, 0), thickness)
-            cv2.imshow('map', image_)
-            cv2.imshow('camera', image)
-            if cv2.waitKey(1) == 27:
-                exit(0)
-        self.counter += 1
+            self.map.createMapPoint(coords)
 
 
 
