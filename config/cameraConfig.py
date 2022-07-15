@@ -58,7 +58,7 @@ conf = {
                                      [0.0, 0.0, 1.0]]),
         "dist_coefs": np.float32(
             [-0.3910597766422878, 0.1294042134601169, -0.0016599207458533047, -0.0068442185280067035, 0.0]),
-        "videoPath": "http://autolab.moevm.info/camera_4/live.mjpg",
+        "videoPath": "http://autolab.moevm.info/W4duEAkH7I0ulzbsfJ4Z/live.mjpg",
         "rectification_matrix": np.float32([[1.0, 0.0, 0.0],
                                             [0.0, 1.0, 0.0],
                                             [0.0, 0.0, 1.0]]),

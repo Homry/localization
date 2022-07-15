@@ -73,9 +73,10 @@ class VideoHandler:
 
         H = cv2.getPerspectiveTransform(pts2, self._pts)
         img = cv2.warpPerspective(img, H, (cols, rows), flags=cv2.WARP_INVERSE_MAP)
-        cv2.imshow('camera', img)
-        if cv2.waitKey(1) == 27:
-            exit(0)
+        if not self._debug:
+            cv2.imshow('camera', img)
+            if cv2.waitKey(1) == 27:
+                exit(0)
         return img
 
     def _undistort(self, img) -> np.array:

@@ -29,23 +29,20 @@ class Grid:
         ratio_x = real_length_x / virtual_length_x
         ratio_y = real_length_y / virtual_length_y
 
-        for j in range(shape[0]//step):
+        for j in range(shape[0] // step):
             tmp = []
-            for i in range(shape[1]//step):
+            for i in range(shape[1] // step):
                 tmp.append(Square(i, j, step))
             self._grid.append(tmp)
-        for i in range(shape[0]//step):
-            for j in range(shape[1]//step):
+        for i in range(shape[0] // step):
+            for j in range(shape[1] // step):
                 self._grid[i][j].createRealCoords(real, virtual, ratio_x, ratio_y)
         self._grid = np.array(self._grid)
         print(self._grid.shape)
 
-
-
-
     def getRobotCoords(self, virtual_coords):
         x = np.round(virtual_coords.getX() / self._step)
-        y = np.round(virtual_coords.getY()/ self._step)
+        y = np.round(virtual_coords.getY() / self._step)
         return self._grid[int(y)][int(x)].getRobotCoords()
 
     def debug(self, image):
@@ -53,11 +50,6 @@ class Grid:
             for j in i:
                 image = j.debug(image)
         return image
-
-
-
-
-
 
 
 if __name__ == "__main__":
@@ -69,4 +61,3 @@ if __name__ == "__main__":
         exit(0)
 
     print(image.shape)
-

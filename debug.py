@@ -15,7 +15,7 @@ class Debug:
         self.config = Config.fromfile(configPath)['conf'][camera]
         self.logger.info(f'init config {self.config}')
         self.video = VideoHandler(self.config, camera, Debug=True)
-        #virtual, real, im_shape = self.video.get_init_camera_state()
+        # virtual, real, im_shape = self.video.get_init_camera_state()
         virtual = {}
         index = 0
         for i in ["A", "B", "C", "D"]:
@@ -43,7 +43,6 @@ class Debug:
             self.logger.info(f'robot coords = {coords.getX(), coords.getY()}')
         print(time.time()-t)
         exit(1)'''
-
 
 
 if __name__ == "__main__":
