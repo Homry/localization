@@ -1,0 +1,9 @@
+
+train: ../some_path/images/train2017/
+val: ../some_path/images/train2017/
+
+# number of classes
+nc: 1
+
+# class names
+names: ['marker']
