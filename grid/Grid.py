@@ -44,8 +44,8 @@ class Grid:
 
 
     def getRobotCoords(self, virtual_coords):
-        x = np.round(virtual_coords.getX() / self._step)
-        y = np.round(virtual_coords.getY()/ self._step)
+        x = int(virtual_coords.getX() / self._step)
+        y = int(virtual_coords.getY()/ self._step)
         return self._grid[int(y)][int(x)].getRobotCoords()
 
     def debug(self, image):

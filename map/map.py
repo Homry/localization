@@ -13,7 +13,7 @@ class Map:
 
         center = (x,self.map.shape[0] - y)
 
-        self.map = cv2.circle(self.map, center, 5, (0, 0, 255), 2)
+        self.map = cv2.circle(self.map, center, 1, (0, 0, 255), 2)
         cv2.imshow('map', self.map)
         if cv2.waitKey(1) == 27:
             exit(0)

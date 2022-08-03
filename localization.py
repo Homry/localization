@@ -6,6 +6,7 @@ import cv2
 from utils import Logger
 from utils import Config
 from map.map import Map
+from numba import njit
 
 
 class Localization:
@@ -16,16 +17,18 @@ class Localization:
         self.logger.info(f'init config {self.config}')
         self.video = VideoHandler(self.config, camera)
         virtual, real, im_shape = self.video.getInitCameraState()
-        self.grid = Grid(im_shape, 10, real, virtual)
-        self.map = Map('./map/autolab.jpeg', 58.5/0.54, 58.5/0.535)
+        self.grid = Grid(im_shape, 5, real, virtual)
+        self.map = Map('./map/autolab.jpeg', 57.5/0.54, 57.5/0.535)
 
-
+    @njit()
     def localize(self):
-        image, robots_coords = self.video.getWrappedImageWithRobotCoords()
+        t = time.time()
+        robots_coords = self.video.getWrappedImageWithRobotCoords()
         for i in robots_coords:
             coords = self.grid.getRobotCoords(Point(i[0], i[1]))
             self.logger.info(f'robot coords = {coords.getX(), coords.getY()}')
             self.map.createMapPoint(coords)
+        print(time.time()- t)
 
 
 
