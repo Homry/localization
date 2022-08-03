@@ -6,7 +6,6 @@ import cv2
 from utils import Logger
 from utils import Config
 from map.map import Map
-from numba import njit
 
 
 class Localization:
@@ -20,7 +19,6 @@ class Localization:
         self.grid = Grid(im_shape, 5, real, virtual)
         self.map = Map('./map/autolab.jpeg', 57.5/0.54, 57.5/0.535)
 
-    @njit()
     def localize(self):
         t = time.time()
         robots_coords = self.video.getWrappedImageWithRobotCoords()

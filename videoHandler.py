@@ -17,6 +17,23 @@ class VideoHandler:
         self.detector = apriltag.Detector(self.options)
         self._pts = None
         self._debug = Debug
+        self._optimalCameraMatrix = None
+        self._perspectiveMatrix = None
+        self._cols = None
+        self._rows = None
+
+    def _init_camera_matrix(self, image, pts):
+        self._rows, self._cols = image.shape[:2]
+        self._optimalCameraMatrix, _ = cv2.getOptimalNewCameraMatrix(self.config["camera_matrix"],
+                                                                     self.config['dist_coefs'],
+                                                                     (self._cols, self._rows), 1,
+                                                                     (self._cols, self._rows))
+        pts2 = np.float32([[pts[0, 0], pts[0, 1]],
+                           [pts[0, 0], pts[2, 1]],
+                           [pts[2, 0], pts[2, 1]],
+                           [pts[2, 0], pts[0, 1]]])
+        pts = np.float32(pts)
+        self._perspectiveMatrix = cv2.getPerspectiveTransform(pts, pts2)
 
     def _showImage(self, img):
         cv2.imshow('camera', img)
@@ -31,8 +48,7 @@ class VideoHandler:
 
     def _getImage(self) -> np.array:
         status, image = self.stream.read()
-        # print(image.shape)
-        # exit(0)
+
         if status is not True:
             self.logger.error(f'getImage - {status}')
         return image
@@ -43,11 +59,11 @@ class VideoHandler:
         real_conf = {}
         image = None
         while not end:
-            image = self._undistort(self._getImage())
-            self._showImage(image)
+            image = self._getImage()
             markers_coords = self._getFloorCoords(image)
             if len(markers_coords) == 4:
-                self._pts = markers_coords
+                self._init_camera_matrix(image, markers_coords)
+                self._pts = np.squeeze(self._undistortPoints(markers_coords))
                 markers_coords = np.float32([[self._pts[0, 0], self._pts[0, 1]],
                                              [self._pts[0, 0], self._pts[2, 1]],
                                              [self._pts[2, 0], self._pts[2, 1]],
@@ -65,43 +81,28 @@ class VideoHandler:
         return virtual_config, real_conf, (image.shape[0], image.shape[1])
 
     def getWrappedImageWithRobotCoords(self) -> np.array:
-        image = self._undistort(self._getImage())
-        floor_cords = self._getFloorCoords(image)
-        image = self._warpPerspective(image, floor_cords)
-        self._showImage(image)
-        robot_coords = self._getRobotCoords(image)
+        robot_coords = self._getRobotCoords(self._getImage())
+        if len(robot_coords) == 0:
+            return []
+
+        robot_coords = self._perspectiveTransformPoints(self._undistortPoints(robot_coords))
         return robot_coords
 
-    def _warpPerspective(self, img, pts1):
-        rows, cols = img.shape[:2]
-        if len(pts1) == 4:
-            self._pts = pts1
-        pts2 = np.float32([[self._pts[0, 0], self._pts[0, 1]],
-                           [self._pts[0, 0], self._pts[2, 1]],
-                           [self._pts[2, 0], self._pts[2, 1]],
-                           [self._pts[2, 0], self._pts[0, 1]]])
+    def _undistortPoints(self, points: np.array) -> np.array:
+        print(points)
+        return cv2.undistortPoints(points, self.config["camera_matrix"], self.config['dist_coefs'], None,
+                                   self._optimalCameraMatrix)
 
-        H = cv2.getPerspectiveTransform(pts2, self._pts)
-        img = cv2.warpPerspective(img, H, (cols, rows), flags=cv2.WARP_INVERSE_MAP)
-        cv2.imwrite("persp.png", img)
-        return img
+    def _perspectiveTransformPoints(self, points) -> np.array:
+        return cv2.perspectiveTransform(points, self._perspectiveMatrix)
 
-
-    def _undistort(self, img) -> np.array:
-        rows, cols = img.shape[:2]
-        cv2.imwrite("def.png", img)
-        newCameraMatrix, _ = cv2.getOptimalNewCameraMatrix(self.config["camera_matrix"], self.config['dist_coefs'],
-                                                           (cols, rows), 1, (cols, rows))
-        img = cv2.undistort(img, self.config["camera_matrix"], self.config['dist_coefs'], None, newCameraMatrix)
-        cv2.imwrite("undist.png", img)
-        return img
 
     def _findAprilTags(self, image):
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         return self.detector.detect(gray)
 
     def _getRobotCoords(self, image):
-        robot_tags = [419]
+        robot_tags = [349]
         robot_coords = []
         robot_id = []
         for i in self._findAprilTags(image):
@@ -110,7 +111,7 @@ class VideoHandler:
                 robot_id.append(i.tag_id)
         if self._debug:
             self.logger.debug(f'find robot Apriltag {robot_coords, robot_id}')
-        return robot_coords
+        return np.array(robot_coords)
 
     def _getFloorCoords(self, image):
         floor_coords = []
@@ -121,7 +122,7 @@ class VideoHandler:
                 floor_id.append(i.tag_id)
         if self._debug:
             self.logger.debug(f'find floor Apriltag {floor_coords, floor_id}')
-        return np.float32(floor_coords)
+        return np.array(floor_coords)
 
     def debug(self, image):
         end = False
