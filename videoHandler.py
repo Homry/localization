@@ -4,7 +4,6 @@ import cv2
 from utils import Logger
 import apriltag
 from grid import Point
-from numba import jit, njit
 
 
 class VideoHandler:
@@ -63,7 +62,8 @@ class VideoHandler:
             markers_coords = self._getFloorCoords(image)
             if len(markers_coords) == 4:
                 self._init_camera_matrix(image, markers_coords)
-                self._pts = np.squeeze(self._undistortPoints(markers_coords))
+                #self._pts = np.squeeze(self._undistortPoints(markers_coords))
+                self._pts = np.squeeze(self._perspectiveTransformPoints(self._undistortPoints(markers_coords)))
                 markers_coords = np.float32([[self._pts[0, 0], self._pts[0, 1]],
                                              [self._pts[0, 0], self._pts[2, 1]],
                                              [self._pts[2, 0], self._pts[2, 1]],
@@ -86,10 +86,9 @@ class VideoHandler:
             return []
 
         robot_coords = self._perspectiveTransformPoints(self._undistortPoints(robot_coords))
-        return robot_coords
+        return robot_coords[0]
 
     def _undistortPoints(self, points: np.array) -> np.array:
-        print(points)
         return cv2.undistortPoints(points, self.config["camera_matrix"], self.config['dist_coefs'], None,
                                    self._optimalCameraMatrix)
 
@@ -102,12 +101,12 @@ class VideoHandler:
         return self.detector.detect(gray)
 
     def _getRobotCoords(self, image):
-        robot_tags = [349]
+        robot_tags = [402]#[349]
         robot_coords = []
         robot_id = []
         for i in self._findAprilTags(image):
             if i.tag_id in robot_tags:
-                robot_coords.append(i.center)
+                robot_coords.append(i.corners[0])
                 robot_id.append(i.tag_id)
         if self._debug:
             self.logger.debug(f'find robot Apriltag {robot_coords, robot_id}')
