@@ -1,3 +1,5 @@
+import time
+
 import cv2
 import numpy as np
 from markerHadler import MarkerHandler
@@ -30,23 +32,31 @@ if __name__ == "__main__":
     image_ = cv2.imread('./testImage.png')
 
     rows, cols = image_.shape[:2]
-    pts = np.float32([[381, 1478], [543, 558], [1445, 527], [1368, 1536]])
-    coordsHandler = CoordsHandler(camera, image_.shape[:2], pts)
+    t = time.time()
     newCameraMatrix, _ = cv2.getOptimalNewCameraMatrix(camera["camera_matrix"], camera['dist_coefs'],
                                                        (cols, rows), 1, (cols, rows))
     image = cv2.undistort(image_, camera["camera_matrix"], camera['dist_coefs'], None, newCameraMatrix)
+    pts = np.float32([[588, 1327], [761, 634], [1452, 621], [1417, 1321]])
     pts2 = np.float32([[pts[0, 0], pts[0, 1]],
                        [pts[0, 0], pts[2, 1]],
                        [pts[2, 0], pts[2, 1]],
                        [pts[2, 0], pts[0, 1]]])
     H = cv2.getPerspectiveTransform(pts2, pts)
     img = cv2.warpPerspective(image, H, (cols, rows), flags=cv2.WARP_INVERSE_MAP)
+    coords_after_manual = markersHandler.getFloorCoords(img)
+    t = time.time() - t
+    print(f'manual = {t}')
 
+    coordsHandler = CoordsHandler(camera, image_.shape[:2], pts)
+    t1 = time.time()
     coords_after_handler = markersHandler.getFloorCoords(image_)
     coords_after_handler = coordsHandler.getWrapperCoords(coords_after_handler)
+    t1 = time.time()-t1
+    print(f'handler = {t1}')
+    print(f'dif = {t - t1}, div = {t/t1}')
     #print(coords_after_handler)
 
-    coords_after_manual = markersHandler.getFloorCoords(img)
+
     #print(coords_after_manual)
     x_err = []
     y_err = []
@@ -54,7 +64,7 @@ if __name__ == "__main__":
     for i, coords in enumerate(coords_after_handler):
         x_err.append(abs(coords[0]-coords_after_manual[i][0])/coords[0]*100)
         y_err.append(abs(coords[1] - coords_after_manual[i][1]) / coords[1] * 100)
-    print(f'x_err = {x_err},\n y_err = {y_err}')
+    print(f'x_err = {x_err},\ny_err = {y_err}')
     x_err = np.array(x_err).mean()
     y_err = np.array(y_err).mean()
     print(f'x_err = {x_err}, y_err = {y_err}')
