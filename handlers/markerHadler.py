@@ -3,12 +3,12 @@ import apriltag
 import numpy as np
 
 
-def getCoords(markers, markers_id: list):
+def getCoords(markers, markers_id: list, all=False):
     save_id = []
     markers_coords = []
     for i in markers:
         if i.tag_id in markers_id:
-            markers_coords.append(i.corners[0])
+            markers_coords.append(i.corners[0]) if all == False else markers_coords.append(i.corners)
             save_id.append(i.tag_id)
     return markers_coords, save_id
 
@@ -30,3 +30,7 @@ class MarkerHandler:
     def getFloorCoords(self, image):
         floor_coords, floor_id = getCoords(self._findAprilTags(image), self._floor_markers_id)
         return np.array(floor_coords)
+
+    def getAll(self, image):
+        robot_coords, robot_id = getCoords(self._findAprilTags(image), self._floor_markers_id, True)
+        return np.array(robot_coords)

@@ -15,5 +15,5 @@ class Map:
 
         self.map = cv2.circle(self.map, center, 1, (0, 0, 255), 2)
         cv2.imshow('map', self.map)
-        if cv2.waitKey(0) == 27:
+        if cv2.waitKey(1) == 27:
             pass

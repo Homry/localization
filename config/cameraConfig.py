@@ -113,3 +113,4 @@ conf = {
 #2022-05-24 14:33:13,218 - VideoStream camera4 - DEBUG - find robot Apriltag ([array([1200.30051087,  544.68859987])], [419])
 #2022-05-24 14:33:13,219 - Localization camera4 - INFO - robot coords = (2.940933123444532, 1.5256753937047676)
 #2022-05-24 14:33:13,219 - Localization camera4 - INFO - robot coords map = [318.60108837315767, 166.82618790977364]
+### https://docs.opencv.org/4.x/d9/d6a/group__aruco.html#ga56878c4f94362c9420f20b78de0def9b
