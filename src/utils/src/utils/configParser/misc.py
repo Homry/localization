@@ -258,7 +258,7 @@ def _check_executable(cmd):
 
 
 def requires_package(prerequisites):
-    """A decorator to check if some python packages are installed.
+    """A decorator to check if some python src are installed.
 
     Example:
         >>> @requires_package('numpy')
