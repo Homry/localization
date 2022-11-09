@@ -1,0 +1,9 @@
+<launch>
+    <arg name="camera"/>
+    <arg name="config"/>
+    <arg name="node_name"/>
+    <node name="$(arg node_name)" pkg="localization" type="localize_node.py" output="screen">
+        <param name="camera" value="$(arg camera)"/>
+        <param name="config" value="$(arg config)"/>
+    </node>
+</launch>
