@@ -3,12 +3,13 @@ import apriltag
 import numpy as np
 
 
-def getCoords(markers, markers_id: list, all=False):
+def getCoords(markers, markers_id: list, center=False):
     save_id = []
     markers_coords = []
     for i in markers:
         if i.tag_id in markers_id:
-            markers_coords.append(i.corners[0]) if all == False else markers_coords.append(i.corners)
+
+            markers_coords.append(i.corners[3]) if center == False else markers_coords.append(i.center)
             save_id.append(i.tag_id)
     return markers_coords, save_id
 
@@ -24,7 +25,7 @@ class MarkerHandler:
         return self.detector.detect(gray)
 
     def getRobotCoords(self, image):
-        robot_coords, robot_id = getCoords(self._findAprilTags(image), self._robots_markers_id)
+        robot_coords, robot_id = getCoords(self._findAprilTags(image), self._robots_markers_id, center=True)
         return np.array(robot_coords)
 
     def getFloorCoords(self, image):

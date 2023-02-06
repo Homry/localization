@@ -1,14 +1,26 @@
 <launch>
-    <arg name="config_path"/>
-    <arg name="map_path"/>
+
     <include file="$(find localization)/launch/localization.launch" >
         <arg name="node_name" value="localize_camera4_node"/>
         <arg name="camera" value="camera4"/>
-        <arg name="config" value="$(arg config_path)"/>
+        <arg name="config" value="/home/homry/OSLL/autolab-extended-localization/src/localization/config/cameraConfig.py"/> #"$(arg config_path)"/>
     </include>
+    <include file="$(find localization)/launch/localization.launch" >
+        <arg name="node_name" value="localize_camera5_node"/>
+        <arg name="camera" value="camera5"/>
+        <arg name="config" value="/home/homry/OSLL/autolab-extended-localization/src/localization/config/cameraConfig.py"/> #"$(arg config_path)"/>
+    </include>
+    <include file="$(find localization)/launch/localization.launch" >
+        <arg name="node_name" value="localize_camera6_node"/>
+        <arg name="camera" value="camera6"/>
+        <arg name="config" value="/home/homry/OSLL/autolab-extended-localization/src/localization/config/cameraConfig.py"/> #"$(arg config_path)"/>
+    </include>
+
     <include file="$(find map)/launch/map.launch">
-        <arg name="map_path" value="$(arg map_path)"/>
+        <arg name="map_path" value="/home/homry/OSLL/autolab-extended-localization/src/map/assets/autolab.jpeg"/>
         <arg name="ratio_x" value="106.48148148148148"/>
         <arg name="ratio_y" value="107.47663551401868"/>
     </include>
+    <node pkg="image_view" type="image_view" name="image_view_debug" args="/map" output="screen"/>
+
 </launch>

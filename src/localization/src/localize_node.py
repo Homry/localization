@@ -17,17 +17,23 @@ class LocalizeNode:
 
         camera = rospy.get_param('~camera')
         self.logger = Logger(f'Localization {camera}')
-
+        import os
+        print(os.getcwd())
         self.config = Config.fromfile(rospy.get_param('~config'))['conf'][camera]
         self.logger.info(f'init config {self.config}')
         self.video = VideoHandler(camera, self.config)
-        self._markerHandler = MarkerHandler(self.config, [349])
-        tmp_pts = np.float32([[570, 1322], [570, 570], [1507, 570], [1507, 1322]])
+        self._markerHandler = MarkerHandler(self.config['markers_id'], [349])
+        #tmp_pts = np.float32([[570, 1322], [570, 570], [1507, 570], [1507, 1322]])
+        tmp_pts = self._markerHandler.getFloorCoords(self.video.getImage())
         self._coordsHandler = CoordsHandler(self.config, self.video.getImageShape(), tmp_pts)
-        self.testGrid = testGrid()
+        virt_markers = []
+        while len(virt_markers) != 4:
+            image = self.video.getImage()
+            virt_markers = self._coordsHandler.getWrapperCoords(self._markerHandler.getFloorCoords(image))
+        self.testGrid = testGrid(config=self.config, virtual_points=virt_markers)
         self.logger.info(f'successfully init {camera} localize_node')
         self._publisher = rospy.Publisher(
-            "robot_pose", Vector3, queue_size=1
+            f"robot_pose", Vector3, queue_size=1
         )
 
     def localize(self):

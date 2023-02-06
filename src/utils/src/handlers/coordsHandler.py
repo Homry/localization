@@ -3,11 +3,15 @@ import numpy as np
 
 
 class CoordsHandler:
-    def __init__(self, config: dict, shape_: tuple, pts):
+    def __init__(self, config: dict, shape_: tuple, pts: np.array):
         self._config = config
         shape = (shape_[1], shape_[0])
         self._optimalCameraMatrix, _ = cv2.getOptimalNewCameraMatrix(config["camera_matrix"], config['dist_coefs'],
-                                                                     shape, 1, shape)
+                                                                    shape, 1, shape)
+
+        pts = np.array([self._undistortPoints(i)[0][0] for i in pts])
+
+
         pts2 = np.float32([[pts[0, 0], pts[0, 1]],
                            [pts[0, 0], pts[2, 1]],
                            [pts[2, 0], pts[2, 1]],
@@ -28,3 +32,9 @@ class CoordsHandler:
             res_coords.append(self._perspectiveTransformPoints(self._undistortPoints(i))[0][0])
         return res_coords
 
+    def undistortImage(self, image):
+        return cv2.undistort(image, self._config["camera_matrix"], self._config['dist_coefs'], None,
+                                   self._optimalCameraMatrix)
+
+    def perspectiveTransformImage(self, image):
+        return cv2.warpPerspective(image, self._perspectiveMatrix, (image.shape[1], image.shape[0]))
