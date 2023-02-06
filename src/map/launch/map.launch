@@ -1,0 +1,10 @@
+<launch>
+    <arg name="map_path"/>
+    <arg name="ratio_x"/>
+    <arg name="ratio_y"/>
+    <node name="map_node" pkg="map" type="map_node.py" output="screen" >
+        <param name="map_path" value="$(arg map_path)"/>
+        <param name="ratio_x" value="$(arg ratio_x)"/>
+        <param name="ratio_y" value="$(arg ratio_y)"/>
+    </node>
+</launch>

@@ -1,16 +1,22 @@
 import cv2
 import numpy as np
-from utils import Logger
 
+from utils import Logger
 
 class VideoHandler:
     def __init__(self, camera: str, config: dict):
         self._stream = cv2.VideoCapture(config['videoPath'])
         self._camera = camera
         self.logger = Logger(f'VideoStream {camera}')
+        self.i = 0
 
     def getImage(self) -> np.array:
+        if self.i == 3:
+            status, image = self._stream.read()
+            self.i = 0
         status, image = self._stream.read()
+        self.i += 1
+
         if status is not True:
             self.logger.error(f'getImage - {status}')
             raise RuntimeError('error with image from video stream')
@@ -36,7 +42,7 @@ if __name__ == "__main__":
         "dist_coefs": np.float32(
             [-0.3540047849355193, 0.11021530240142789, -0.007400920530526965, -0.008230929654647412, 0.0]),
         #"videoPath": "http://autolab.moevm.info/camera_4/live.mjpg",
-        "videoPath": "rtsp://admin:@10.135.4.235/trackID=1",
+        "videoPath": "rtsp://admin:@10.135.4.237/trackID=1",
         "rectification_matrix": np.float32([[1.0, 0.0, 0.0],
                                             [0.0, 1.0, 0.0],
                                             [0.0, 0.0, 1.0]]),
