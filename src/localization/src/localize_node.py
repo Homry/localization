@@ -5,6 +5,7 @@ from geometry_msgs.msg import Vector3
 from handlers.videoHandler import VideoHandler
 from handlers.coordsHandler import CoordsHandler
 from handlers.markerHadler import MarkerHandler
+from localization_msgs.msg import FloorCoords
 from handlers.testGrid import testGrid
 from utils.logger import Logger
 from utils.configParser.config import Config
@@ -15,29 +16,29 @@ class LocalizeNode:
     def __init__(self):
         rospy.init_node('localize_node', log_level=rospy.INFO)
 
-        camera = rospy.get_param('~camera')
-        self.logger = Logger(f'Localization {camera}')
-        import os
-        print(os.getcwd())
-        self.config = Config.fromfile(rospy.get_param('~config'))['conf'][camera]
+        self.camera = rospy.get_param('~camera')
+        self.logger = Logger(f'Localization {self.camera}')
+        self.config = Config.fromfile(rospy.get_param('~config'))['conf'][self.camera]
         self.logger.info(f'init config {self.config}')
-        self.video = VideoHandler(camera, self.config)
-        self._markerHandler = MarkerHandler(self.config['markers_id'], [349])
-        #tmp_pts = np.float32([[570, 1322], [570, 570], [1507, 570], [1507, 1322]])
-        tmp_pts = self._markerHandler.getFloorCoords(self.video.getImage())
-        self._coordsHandler = CoordsHandler(self.config, self.video.getImageShape(), tmp_pts)
-        virt_markers = []
-        while len(virt_markers) != 4:
-            image = self.video.getImage()
-            virt_markers = self._coordsHandler.getWrapperCoords(self._markerHandler.getFloorCoords(image))
-        self.testGrid = testGrid(config=self.config, virtual_points=virt_markers)
-        self.logger.info(f'successfully init {camera} localize_node')
+
+        self._floor_sub = rospy.Subscriber(f'{self.camera}/floorCoords', FloorCoords, self.init queue_size=1)
+        self._coordsHandler = None
+        self.testGrid = None
+
         self._publisher = rospy.Publisher(
             f"robot_pose", Vector3, queue_size=1
         )
 
+
+    def init(self, msg: FloorCoords):
+        pts = [[i.x, i.y] for i in msg.coords]
+        self._coordsHandler = CoordsHandler(self.config, (msg.shape.x, msg.shape.y), pts)
+        virt_markers = self._coordsHandler.getWrapperCoords(pts)
+        self.testGrid = testGrid(config=self.config, virtual_points=virt_markers)
+        self.logger.info(f'successfully init {self.camera} localize_node')
+
     def localize(self):
-        image = self.video.getImage()
+
         robots_coords = self._coordsHandler.getWrapperCoords(self._markerHandler.getRobotCoords(image))
         for i in robots_coords:
             coords = self.testGrid.transform(Point(i[0], i[1]))
