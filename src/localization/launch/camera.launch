@@ -1,0 +1,16 @@
+<launch>
+
+    <include file="$(find camera_node)/launch/camera.launch" >
+        <arg name="node_name" value="camera4_node"/>
+        <arg name="camera" value="camera4"/>
+        <arg name="config" value="/home/homry/OSLL/autolab-extended-localization/src/localization/config/cameraConfig.py"/> #"$(arg config_path)"/>
+    </include>
+    <include file="$(find find_apriltag)/launch/findApriltag.launch" >
+        <arg name="node_name" value="findApriltag4"/>
+        <arg name="camera" value="camera4"/>
+        <arg name="config" value="/home/homry/OSLL/autolab-extended-localization/src/localization/config/cameraConfig.py"/> #"$(arg config_path)"/>
+    </include>
+
+
+
+</launch>
