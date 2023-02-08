@@ -10,18 +10,22 @@ from utils.configParser.config import Config
 from localization_msgs.msg import FloorCoords, RobotCoords, Image as localImage
 
 
-def getCoords(markers, markers_id: list, center=False):
+def getCoords(markers, markers_id: list, center=False, corner=False):
     markers_coords = []
     save_id = []
     center_coords = []
+    corners = []
     for i in markers:
         if i.tag_id in markers_id:
             markers_coords.append(i.corners)
             center_coords.append(i.center)
+            corners.append(i.corners[3])
             #markers_coords.append(i.corners[3]) if center == False else markers_coords.append(i.center)
             save_id.append(i.tag_id)
     if center:
         return markers_coords, save_id, center_coords
+    elif corner:
+        return corners, save_id
     else:
         return markers_coords, save_id
 
@@ -66,8 +70,11 @@ class FindApriltagNode:
 
     def send_floor_coords(self, coords, shape):
         msg = FloorCoords()
+        print(coords)
         msg.coords = [Vector3(i[0], i[1], 0) for i in coords]
-        msg.shape = Vector3(shape[0], shape[1], shape[2])
+
+        msg.shape = Vector3(shape[1], shape[0], shape[2])
+        print(msg)
         self._floor_coords_publisher.publish(msg)
 
     def find(self, msg: localImage):
@@ -123,7 +130,7 @@ class FindApriltagNode:
         return np.array(robot_coords), np.array(center)
 
     def getFloorCoords(self, image):
-        floor_coords, saved_id = getCoords(self._findAprilTags(image), self._floor_markers_id)
+        floor_coords, saved_id = getCoords(self._findAprilTags(image), self._floor_markers_id, corner=True)
         return np.array(floor_coords)
 
     def getAll(self, image):

@@ -19,6 +19,7 @@ add_message_files(
   Image.msg
   FloorCoords.msg
   RobotCoords.msg
+  RealRobotCoords.msg
 )
 
 #

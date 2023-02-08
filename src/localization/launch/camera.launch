@@ -1,14 +1,23 @@
 <launch>
-
+    <arg name="camera_node_name"/>
+    <arg name="camera_name"/>
+    <arg name="config_path" value="/home/homry/OSLL/autolab-extended-localization/src/localization/config/cameraConfig.py"/>
+    <arg name="apriltag_node_name"/>
+    <arg name="localize_node_name"/>
     <include file="$(find camera_node)/launch/camera.launch" >
-        <arg name="node_name" value="camera4_node"/>
-        <arg name="camera" value="camera4"/>
-        <arg name="config" value="/home/homry/OSLL/autolab-extended-localization/src/localization/config/cameraConfig.py"/> #"$(arg config_path)"/>
+        <arg name="node_name" value="$(arg camera_node_name)"/>
+        <arg name="camera" value="$(arg camera_name)"/>
+        <arg name="config" value="$(arg config_path)"/>
     </include>
     <include file="$(find find_apriltag)/launch/findApriltag.launch" >
-        <arg name="node_name" value="findApriltag4"/>
-        <arg name="camera" value="camera4"/>
-        <arg name="config" value="/home/homry/OSLL/autolab-extended-localization/src/localization/config/cameraConfig.py"/> #"$(arg config_path)"/>
+        <arg name="node_name" value="$(arg apriltag_node_name)"/>
+        <arg name="camera" value="$(arg camera_name)"/>
+        <arg name="config" value="$(arg config_path)"/>
+    </include>
+    <include file="$(find localization)/launch/localization.launch" >
+        <arg name="node_name" value="$(arg localize_node_name)"/>
+        <arg name="camera" value="$(arg camera_name)"/>
+        <arg name="config" value="$(arg config_path)"/>
     </include>
 
 
