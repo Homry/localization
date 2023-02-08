@@ -1,5 +1,5 @@
 <launch>
-
+    #launch camera4 system
     <include file="$(find localization)/launch/camera.launch" >
         <arg name="camera_node_name" value="camera4_node"/>
         <arg name="camera_name" value="camera4"/>
@@ -7,7 +7,23 @@
         <arg name="localize_node_name" value="localize_camera4"/>
     </include>
 
+    #launch camera5 system
+    <include file="$(find localization)/launch/camera.launch" >
+        <arg name="camera_node_name" value="camera5_node"/>
+        <arg name="camera_name" value="camera5"/>
+        <arg name="apriltag_node_name" value="findAprilTag5"/>
+        <arg name="localize_node_name" value="localize_camera5"/>
+    </include>
 
+    #launch camera6 system
+    <include file="$(find localization)/launch/camera.launch" >
+        <arg name="camera_node_name" value="camera6_node"/>
+        <arg name="camera_name" value="camera6"/>
+        <arg name="apriltag_node_name" value="findAprilTag6"/>
+        <arg name="localize_node_name" value="localize_camera6"/>
+    </include>
+
+    #launch map node
     <include file="$(find map)/launch/map.launch">
         <arg name="map_path" value="/home/homry/OSLL/autolab-extended-localization/src/map/assets/autolab.jpeg"/>
         <arg name="ratio_x" value="106.48148148148148"/>
