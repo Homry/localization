@@ -3,12 +3,13 @@ import numpy as np
 
 
 class CoordsHandler:
-    def __init__(self, config: dict, shape_: tuple, pts: np.array):
+    def __init__(self, config: dict, shape: tuple, pts: np.array):
         self._config = config
-        shape = (shape_[1], shape_[0])
+        #print(shape_)
+        #shape = (int(shape_[1]), int(shape_[0]))
         self._optimalCameraMatrix, _ = cv2.getOptimalNewCameraMatrix(config["camera_matrix"], config['dist_coefs'],
                                                                     shape, 1, shape)
-
+        print(pts)
         pts = np.array([self._undistortPoints(i)[0][0] for i in pts])
 
 
