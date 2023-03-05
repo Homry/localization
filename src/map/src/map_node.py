@@ -19,12 +19,9 @@ class MapNode:
         self.image_pub = rospy.Publisher("map", Image)
 
     def createMapPoint(self, robot_point: RealRobotCoords):
-        print(robot_point, 'printed!!!!!!')
         x = int(robot_point.coords.x*self.ratio_x)
         y = int(robot_point.coords.y*self.ratio_y)
-
         center = (x, self.map.shape[0] - y)
-
         self.map = cv2.circle(self.map, center, 1, (0, 0, 255), 2)
         image_message = self.bridge.cv2_to_imgmsg(self.map, encoding="bgr8")
         self.image_pub.publish(image_message)
