@@ -32,7 +32,6 @@ class CameraNode:
 
         self._publisher.publish(image)
         self._publisher_debug.publish(image_message)
-        print(f'{self.camera} read')
         self.__counter = 0
 
 
