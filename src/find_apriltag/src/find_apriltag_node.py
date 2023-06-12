@@ -64,62 +64,66 @@ class FindApriltagNode:
         self.prev_exist = False
         self.prev_state = None
         self.send_floor = False
+        self.counter = 0
         self._floor_coords_publisher = rospy.Publisher(f'{camera}/floorCoords', FloorCoords, queue_size=1)
 
         self.update_cords = [[-100, -100], [100, -100], [-100, 100], [100, 100]]
 
     def send_floor_coords(self, coords, shape):
         msg = FloorCoords()
-        print(coords)
+        #print(coords)
         msg.coords = [Vector3(i[0], i[1], 0) for i in coords]
 
         msg.shape = Vector3(shape[1], shape[0], shape[2])
-        print(msg)
+        #print(msg)
         self._floor_coords_publisher.publish(msg)
 
     def find(self, msg: localImage):
-        image = self.bridge.imgmsg_to_cv2(msg.image)
-        if not self.send_floor:
-            self.send_floor = True
-            markers = self.getFloorCoords(image)
-            if len(markers) == 4:
-                self.send_floor_coords(markers, image.shape)
+        if self.counter == 0:
+            self.counter = (self.counter + 1) % 10
+            image = self.bridge.imgmsg_to_cv2(msg.image)
+            if not self.send_floor:
+                self.send_floor = True
+                markers = self.getFloorCoords(image)
+                if len(markers) == 4:
+                    self.send_floor_coords(markers, image.shape)
 
-        if not self.prev_exist:
+            if not self.prev_exist:
 
-            coords, center = self.getRobotCoords(image)
-            center = center[0] if len(center) > 0 else []
-            coords = coords[0] if len(coords) > 0 else []
+                coords, center = self.getRobotCoords(image)
+                center = center[0] if len(center) > 0 else []
+                coords = coords[0] if len(coords) > 0 else []
 
-            if len(coords) > 0:
-                coords = update_crop_coords(coords, self.update_cords)
-                self.prev_exist = True
-                self.prev_state = [coords[0], coords[1], coords[2], coords[3]]
+                if len(coords) > 0:
+                    coords = update_crop_coords(coords, self.update_cords)
+                    self.prev_exist = True
+                    self.prev_state = [coords[0], coords[1], coords[2], coords[3]]
+
+            else:
+                image = image[self.prev_state[0]:self.prev_state[1], self.prev_state[2]:self.prev_state[3]]
+
+                coords, center = self.getRobotCoords(image)
+                coords = coords[0] if len(coords) > 0 else []
+                coords = [[i[0]+self.prev_state[2], i[1]+self.prev_state[0]] for i in coords]
+
+                center = center[0] if len(center) > 0 else []
+                center = [center[0]+self.prev_state[2], center[1]+self.prev_state[0]] if len(center) > 0 else []
+
+                if len(coords) == 0:
+                    self.prev_exist = False
+                    self.prev_state = None
+                else:
+                    self.prev_state = update_crop_coords(coords, self.update_cords)
+
+            if len(center) > 0:
+                coords_msg = RobotCoords()
+                coords_msg.coords = [Vector3(center[0], center[1], 0)] if len(center) > 0 else []
+                coords_msg.time = msg.time
+                self._robot_cords_publisher.publish(coords_msg)
+
 
         else:
-            image = image[self.prev_state[0]:self.prev_state[1], self.prev_state[2]:self.prev_state[3]]
-
-            coords, center = self.getRobotCoords(image)
-            coords = coords[0] if len(coords) > 0 else []
-            coords = [[i[0]+self.prev_state[2], i[1]+self.prev_state[0]] for i in coords]
-
-            center = center[0] if len(center) > 0 else []
-            center = [center[0]+self.prev_state[2], center[1]+self.prev_state[0]] if len(center) > 0 else []
-
-            if len(coords) == 0:
-                self.prev_exist = False
-                self.prev_state = None
-            else:
-                self.prev_state = update_crop_coords(coords, self.update_cords)
-
-        if len(center) > 0:
-            coords_msg = RobotCoords()
-            coords_msg.coords = [Vector3(center[0], center[1], 0)] if len(center) > 0 else []
-            coords_msg.time = msg.time
-            self._robot_cords_publisher.publish(coords_msg)
-
-        image_message = self.bridge.cv2_to_imgmsg(image, "bgr8")
-        self._robot_publisher.publish(image_message)
+            self.counter = (self.counter + 1) % 10
 
     def _findAprilTags(self, image):
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)

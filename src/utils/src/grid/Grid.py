@@ -1,7 +1,6 @@
 from typing import Dict, Tuple
 from grid import Square, Point
 import numpy as np
-from logging import Logger
 import cv2
 
 

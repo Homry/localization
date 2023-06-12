@@ -1,0 +1,9 @@
+./venv
+./src/videos
+build
+devel
+calibrate_perpective
+.gitignore
+README.md
+*.idea
+

@@ -12,6 +12,7 @@ class CameraNode:
 
         rospy.init_node(f'camera_node', log_level=rospy.INFO)
         camera = rospy.get_param('~camera')
+        self.camera = camera
         self.config = Config.fromfile(rospy.get_param('~config'))['conf'][camera]['videoPath']
         self._stream = cv2.VideoCapture(self.config)
         self._publisher_debug = rospy.Publisher(
@@ -24,23 +25,22 @@ class CameraNode:
         self.__counter = 0
 
     def stream(self):
-        if self.__counter == 2:
+        status, image = self._stream.read()
+        time = rospy.get_time()
+        image_message = self.bridge.cv2_to_imgmsg(image, encoding="bgr8")
+        image = localImage(time=time, image=image_message)
 
-            status, image = self._stream.read()
-            time = rospy.get_time()
-            image_message = self.bridge.cv2_to_imgmsg(image, encoding="bgr8")
-            image = localImage(time=time, image=image_message)
-            self._publisher.publish(image)
-            self._publisher_debug.publish(image_message)
-            self.__counter = 0
-        else:
-            status, image = self._stream.read()
-            self.__counter += 1
+        self._publisher.publish(image)
+        self._publisher_debug.publish(image_message)
+        self.__counter = 0
+
 
 
 if __name__ == '__main__':
     camera = CameraNode()
+    #rate = rospy.Rate(5)
     while not rospy.is_shutdown():
         camera.stream()
+
 
 

@@ -1,0 +1,8 @@
+version: "3.3"
+
+services:
+  localization:
+    build: ./
+    container_name: extend-localization
+    ports:
+      - "2345:22"

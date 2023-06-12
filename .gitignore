@@ -133,6 +133,6 @@ dmypy.json
 
 # file
 src/CMakeLists.txt
-*.jpg
-*.jpeg
 
+src/videos
+calibrate_perpective
